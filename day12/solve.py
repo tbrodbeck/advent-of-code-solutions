@@ -1,12 +1,8 @@
 """Day 12: Christmas Tree Farm - Count regions where presents can fit."""
 
-import sys
-import os
 import re
 from functools import lru_cache
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils import run
+from pathlib import Path
 
 
 def parse(f):
@@ -89,11 +85,6 @@ def parse(f):
 
 
 def _normalize_cells(cells: list[tuple[int, int]]) -> tuple[tuple[int, int], ...]:
-    """Normalize filled cells so min x/y becomes (0,0) and order is stable.
-    Args:
-        cells: List of (x,y) cells.
-    Returns:
-        Normalized cells as a sorted tuple."""
     min_x = min(x for x, _ in cells)
     min_y = min(y for _, y in cells)
     return tuple(sorted((x - min_x, y - min_y) for x, y in cells))
@@ -102,26 +93,10 @@ def _normalize_cells(cells: list[tuple[int, int]]) -> tuple[tuple[int, int], ...
 def _orientations(
     shape: tuple[tuple[int, int], ...],
 ) -> list[tuple[tuple[tuple[int, int], ...], int, int]]:
-    """Generate unique rotations/reflections of a shape with their bounding boxes.
-    Args:
-        shape: Normalized shape cells.
-    Returns:
-        List of (cells, width, height) for each unique orientation."""
-
     def rot90(c):
-        """Rotate cells 90 degrees around origin.
-        Args:
-            c: List of (x,y) cells.
-        Returns:
-            Rotated list of cells."""
         return [(y, -x) for x, y in c]
 
     def flipx(c):
-        """Mirror cells across the y-axis.
-        Args:
-            c: List of (x,y) cells.
-        Returns:
-            Mirrored list of cells."""
         return [(-x, y) for x, y in c]
 
     seen: set[tuple[tuple[int, int], ...]] = set()
@@ -141,13 +116,6 @@ def _orientations(
 
 
 def _placements(w: int, h: int, shape: tuple[tuple[int, int], ...]) -> list[int]:
-    """Compute all bitmask placements of a shape within a w×h grid.
-    Args:
-        w: Grid width.
-        h: Grid height.
-        shape: Normalized shape cells.
-    Returns:
-        Sorted list of unique placement bitmasks."""
     masks: set[int] = set()
     for cells, sw, sh in _orientations(shape):
         if sw > w or sh > h:
@@ -164,14 +132,6 @@ def _placements(w: int, h: int, shape: tuple[tuple[int, int], ...]) -> list[int]
 def _can_fit_region(
     w: int, h: int, shapes: list[tuple[tuple[int, int], ...]], qty: list[int]
 ) -> bool:
-    """Decide whether the required multiset of shapes can fit without overlap in a region.
-    Args:
-        w: Region width.
-        h: Region height.
-        shapes: Available shapes.
-        qty: Quantities per shape index.
-    Returns:
-        True if the region is considered feasible, else False."""
     qty = qty + [0] * (len(shapes) - len(qty))
     if len(qty) != len(shapes):
         raise ValueError("Region quantities must match number of shapes")
@@ -194,12 +154,6 @@ def _can_fit_region(
 
     @lru_cache(None)
     def dfs(occupied: int, counts: tuple[int, ...]) -> bool:
-        """Backtracking feasibility check with memoization over occupied cells and remaining counts.
-        Args:
-            occupied: Bitmask of filled grid cells.
-            counts: Remaining counts per shape index.
-        Returns:
-            True if a packing exists from this state, else False."""
         if not any(counts):
             return True
         best_i = -1
@@ -236,14 +190,8 @@ def count_part1(parsed) -> int:
     return sum(1 for w, h, qty in regions if _can_fit_region(w, h, shapes, qty))
 
 
-def count_part2(parsed) -> int:
-    """Solve part 2.
-    Args:
-        parsed: Parsed input data.
-    Returns:
-        Answer for part 2."""
-    return count_part1(parsed)
-
-
 if __name__ == "__main__":
-    run(__file__, parse, count_part1, count_part2)
+    with Path(__file__).with_name("input.txt").open() as f:
+        parsed = parse(f)
+    ans = count_part1(parsed)
+    print(f"Part 1: {ans}")
