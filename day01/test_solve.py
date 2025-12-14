@@ -1,5 +1,5 @@
 import unittest
-from .solve import Part1Simulator, Part2Simulator
+from .solve import Part1Simulator, Part2Simulator, parse
 
 EXAMPLE = ["L68", "L30", "R48", "L5", "R60", "L55", "L1", "L99", "R14", "L82"]
 
@@ -36,6 +36,10 @@ class TestPart2(unittest.TestCase):
 
     def test_left_full_circle(self):
         self.assertEqual(Part2Simulator.solve(["R50", "L100"]), 2)
+
+class TestParsing(unittest.TestCase):
+    def test_direction_sign(self):
+        self.assertEqual(list(parse(["L1", "R1"])), [-1, 1])
 
 
 if __name__ == "__main__":

@@ -2,119 +2,94 @@
 
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
-import sys
 import os
+import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import run_parts, parse_lines
 
 
-def parse(lines: list[str]) -> Iterator[tuple[str, int]]:
-    """Parse input lines into rotation instructions.
-    Args:
-        lines: Raw input lines containing rotation commands.
-    Yields:
-        Tuples of (direction, distance) where direction is 'L' or 'R'."""
+def parse(lines: list[str]) -> Iterator[int]:
+    """Parse input lines.
+    Args: lines: Raw input lines.
+    Returns: Iterator of (direction, distance)."""
 
-    def parse_line(line: str) -> Iterator[tuple[str, int]]:
-        yield line[0], int(line[1:])
+    def parse_line(line: str) -> Iterator[int]:
+        if line[0] == "R":
+            yield int(line[1:])
+        elif line[0] == "L":
+            yield -int(line[1:])
+        else:
+            raise ValueError(f"Invalid direction: {line[0]}")
 
     return parse_lines(lines, parse_line)
 
 
 class DialSimulator(ABC):
-    """Abstract base class for simulating dial rotations and counting."""
+    """Base class for Day 1 simulation."""
 
     def __init__(self) -> None:
-        """Initialize dial simulator with position 50 and count 0."""
+        """Initialize simulator state."""
         self.position = 50
-        self.count = 0
-
-    def _update_position(self, direction: str, distance: int) -> None:
-        """Update dial position based on rotation.
-        Args:
-            direction: 'L' for left, 'R' for right.
-            distance: Number of clicks to rotate."""
-        if direction == "L":
-            self.position = (self.position - distance) % 100
-        else:
-            self.position = (self.position + distance) % 100
+        self.counter = 0
 
     @abstractmethod
-    def process_rotation(self, direction: str, distance: int) -> None:
-        """Process a single rotation with counting logic.
+    def process_rotation(self, distance: int) -> None:
+        """Process one rotation.
         Args:
-            direction: 'L' for left, 'R' for right.
-            distance: Number of clicks to rotate."""
+              distance: Rotation distance."""
         pass
-
-    def _simulate(self, rotations: Iterator[tuple[str, int]]) -> int:
-        """Simulate all rotations and return final count.
-        Args:
-            rotations: Iterator of (direction, distance) tuples.
-        Returns:
-            Final count after all rotations."""
-        for direction, distance in rotations:
-            self.process_rotation(direction, distance)
-        return self.count
 
     @classmethod
     def solve(cls, lines: list[str]) -> int:
-        """Solve by parsing lines and simulating.
-        Args:
-            lines: Raw input lines containing rotation instructions.
-        Returns:
-            Solution result."""
+        """Solve Day 1 for this simulator.
+        Args: lines: Raw input lines.
+        Returns: Answer for this part."""
         simulator = cls()
-        return simulator._simulate(parse(lines))
+        for distance in parse(lines):
+            simulator.process_rotation(distance)
+        return simulator.counter
 
 
 class Part1Simulator(DialSimulator):
-    """Counts times dial points at 0 after rotation."""
+    """Day 1 Part 1 simulator."""
 
-    def process_rotation(self, direction: str, distance: int) -> None:
-        """Count logic for part 1: count when position becomes 0.
+    def process_rotation(self, distance: int) -> None:
+        """Process one rotation.
         Args:
-            direction: 'L' for left, 'R' for right.
-            distance: Number of clicks to rotate."""
-        self._update_position(direction, distance)
+              distance: Rotation distance."""
+        self.position += distance
+        self.position = self.position % 100
         if self.position == 0:
-            self.count += 1
+            self.counter += 1
 
 
 class Part2Simulator(DialSimulator):
-    """Counts every instance dial points at 0 during rotation."""
+    """Day 1 Part 2 simulator."""
 
-    def _count_zero_crossings(self, direction: str, distance: int) -> int:
-        """Count how many times dial crosses 0 during a rotation.
+    def _count_zero_crossings(self) -> int:
+        """Check if the position is between 0 and 99.
         Args:
-            direction: 'L' for left, 'R' for right.
-            distance: Number of clicks to rotate.
+            position: Current position.
+            previous_position: Previous position.
         Returns:
-            Number of times 0 is crossed."""
-        if direction == "R":
-            return (self.position + distance) // 100
-        else:  # direction == "L"
-            if self.position == 0:
-                return distance // 100
-            elif distance > self.position:
-                return 1 + (distance - self.position) // 100
-            elif distance == self.position:
-                return 1
-            else:
-                return 0
+            True if the position is between 0 and 99, False otherwise."""
+        if self.previous_position < 100 <= self.position:
+            self.counter += self.position // 100
+        elif self.position <= 0 < self.previous_position:
+            self.counter += -self.position // 100 + 1
+        elif self.previous_position == 0 and self.position <= -100:
+            self.counter += -self.position // 100
 
-    def process_rotation(self, direction: str, distance: int) -> None:
-        """Count logic for part 2: count crossings during rotation.
-        Args:
-            direction: 'L' for left, 'R' for right.
-            distance: Number of clicks to rotate."""
-        self.count += self._count_zero_crossings(direction, distance)
-        self._update_position(direction, distance)
+    def process_rotation(self, distance: int) -> None:
+        """Process one rotation.
+        Args: direction: Rotation direction.
+              distance: Rotation distance."""
+        self.previous_position = self.position
+        self.position += distance
+        self._count_zero_crossings()
+        self.position = self.position % 100
 
 
 if __name__ == "__main__":
-    run_parts(
-        Part1Simulator.solve,
-        Part2Simulator.solve,
-    )
+    run_parts(Part1Simulator.solve, Part2Simulator.solve)
