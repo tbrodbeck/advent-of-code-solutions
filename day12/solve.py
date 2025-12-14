@@ -56,8 +56,6 @@ def parse(f):
     shapes: list[tuple[tuple[int, int], ...]] = []
     for idx in range(max_idx + 1):
         rows = shapes_by_idx.get(idx)
-        if rows is None:
-            raise ValueError(f"Missing shape index {idx}")
         cells = [
             (x, y)
             for y, row in enumerate(rows)
