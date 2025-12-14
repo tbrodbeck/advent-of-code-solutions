@@ -1,6 +1,6 @@
 import unittest
 import io
-from .solve import parse, count_part1, count_part2
+from .solve import parse, count_part1
 
 EXAMPLE = """\
 0:
@@ -42,11 +42,6 @@ EXAMPLE = """\
 class TestPart1(unittest.TestCase):
     def test_example(self):
         self.assertEqual(count_part1(parse(io.StringIO(EXAMPLE))), 2)
-
-
-class TestPart2(unittest.TestCase):
-    def test_example(self):
-        self.assertEqual(count_part2(parse(io.StringIO(EXAMPLE))), 2)
 
 
 if __name__ == "__main__":
