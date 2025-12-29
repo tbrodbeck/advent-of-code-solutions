@@ -201,7 +201,6 @@ defmodule AdventOfCode.Day12 do
   end
 
   def part2(_input) do
-    # Part 2 not implemented in Python
     :not_implemented
   end
 end
